@@ -4,7 +4,7 @@
 window.data =
   todos: [
       title: 'first title'
-      completed: true
+      completed: false
     ,
       title: 'second title'
       completed: true
@@ -18,7 +18,7 @@ filters =
 
 $ ->
 
-  window.TodoApp = review.view '#todoapp',
+  window.TodoApp = review.view '.todoapp',
     
     active_filter: 'filter-all'
 
@@ -56,6 +56,10 @@ $ ->
       $('#filters *').removeClass 'selected'
       $('.'+@active_filter).addClass 'selected'
 
+    resync: ->
+      console.log 'resync'
+      @syncRoot data
+
   TodoItem = review.view '.todo',
     
     events:
@@ -86,23 +90,25 @@ $ ->
         data.todos = data.todos.filter (item)=>
           item isnt @item
     
-    afterSync: (node, todo)-> # crap, but necessary for jQuery plugins
+    afterSync: (todo)-> # crap, but necessary for jQuery plugins
 
+      console.log 'AFTER-SYNC'
       @$.toggleClass 'editing', @parent().editing_todo is todo
       @$.toggleClass 'completed', todo.completed
+      console.log todo.completed
       
       app = @parent()
       console.log app.active_filter
       console.log filters[app.active_filter] todo
       if filters[app.active_filter] todo
-        $(node).css 'display', 'block'
+        @$.css 'display', 'block'
       else
-        $(node).css 'display', 'none'
+        @$.css 'display', 'none'
 
       true
 
-    syncData: (data)-> # crap
-      @parent().syncRoot()
+    resync: ->
+      @parent().syncRoot data
 
-  review.init data  # crap
+  review.init $("#todoapp").get(0), data  # crap
 
