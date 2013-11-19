@@ -28,7 +28,7 @@
 
   $(function() {
     var TodoItem;
-    window.TodoApp = review.view('#todoapp', {
+    window.TodoApp = review.view('.todoapp', {
       active_filter: 'filter-all',
       events: {
         'keydown #new-todo': function(e) {
@@ -134,7 +134,7 @@
         return this.parent().syncRoot();
       }
     });
-    return review.init(data);
+    return review.init($('#todoapp').get(0), data);
   });
 
 }).call(this);

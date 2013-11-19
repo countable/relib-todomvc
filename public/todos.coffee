@@ -11,14 +11,14 @@ window.data =
   ]
 
 
-filters = 
+filters =
   'filter-all': (todo)-> true
   'filter-active': (todo)-> not todo.completed
   'filter-completed': (todo)-> todo.completed
 
 $ ->
 
-  window.TodoApp = review.view '#todoapp',
+  window.TodoApp = review.view '.todoapp',
     
     active_filter: 'filter-all'
 
@@ -104,5 +104,5 @@ $ ->
     syncData: (data)-> # crap
       @parent().syncRoot()
 
-  review.init data  # crap
+  review.init $('#todoapp').get(0), data  # crap
 
