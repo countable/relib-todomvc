@@ -4,7 +4,7 @@
 window.data =
   todos: [
       title: 'first title'
-      completed: true
+      completed: false
     ,
       title: 'second title'
       completed: true
@@ -16,9 +16,10 @@ filters =
   'filter-active': (todo)-> not todo.completed
   'filter-completed': (todo)-> todo.completed
 
+
 $ ->
 
-  window.TodoApp = review.view '.todoapp',
+  review.view '.todoapp',
     
     active_filter: 'filter-all'
 
@@ -33,11 +34,10 @@ $ ->
           false
 
       'click #filters': (e)->
-        console.log 'set filter', e.target.className
         @active_filter = e.target.className
 
       'change #toggle-all': ->
-        all_checked = data.todos.filter( (item)-> item.completed ).length is data.todos.length
+        all_checked = @scope 'n-completed'
         for todo in data.todos
           todo.completed = not all_checked
         true
@@ -46,15 +46,16 @@ $ ->
         data.todos = data.todos.filter( (item)-> not item.completed )
         true
 
-    scope:
-      '.n-completed': ->
-        data.todos.filter( (item)-> item.completed ).length
-      '.n-left': ->
-        data.todos.length - data.todos.filter( (item)-> item.completed ).length
+    'n-completed': -> data.todos.filter( (item)-> item.completed ).length
+
+    'n-left': -> data.todos.length - @scope('n-completed')
     
     afterSync: (data)->
-      $('#filters *').removeClass 'selected'
-      $('.'+@active_filter).addClass 'selected'
+      @$.find('#filters *').removeClass 'selected'
+      @$.find('.'+@active_filter).addClass 'selected'
+
+    resync: ->
+      @syncRoot data
 
   TodoItem = review.view '.todo',
     
@@ -75,10 +76,10 @@ $ ->
       
       'keydown [type="text"]': (e)->
         if e.which is 13
-          @item.title = e.target.value
+          @parent().editing_todo = null
           @$.removeClass 'editing'
         else if e.which is 27
-          @$.removeClass 'editing'
+          @parent().editing_todo = null
         else
           false
 
@@ -86,23 +87,17 @@ $ ->
         data.todos = data.todos.filter (item)=>
           item isnt @item
     
-    afterSync: (node, todo)-> # crap, but necessary for jQuery plugins
+
+    afterSync: (todo)-> # crap, but necessary for jQuery plugins
 
       @$.toggleClass 'editing', @parent().editing_todo is todo
       @$.toggleClass 'completed', todo.completed
-      
-      app = @parent()
-      console.log app.active_filter
-      console.log filters[app.active_filter] todo
-      if filters[app.active_filter] todo
-        $(node).css 'display', 'block'
-      else
-        $(node).css 'display', 'none'
+      @$.toggleClass 'hidden', not filters[@parent().active_filter] todo
 
       true
 
-    syncData: (data)-> # crap
-      @parent().syncRoot()
+    resync: ->
+      @parent().resync()
 
   review.init $('#todoapp').get(0), data  # crap
 

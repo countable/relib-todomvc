@@ -6,7 +6,7 @@
     todos: [
       {
         title: 'first title',
-        completed: true
+        completed: false
       }, {
         title: 'second title',
         completed: true
@@ -28,7 +28,7 @@
 
   $(function() {
     var TodoItem;
-    window.TodoApp = review.view('.todoapp', {
+    review.view('.todoapp', {
       active_filter: 'filter-all',
       events: {
         'keydown #new-todo': function(e) {
@@ -43,14 +43,11 @@
           }
         },
         'click #filters': function(e) {
-          console.log('set filter', e.target.className);
           return this.active_filter = e.target.className;
         },
         'change #toggle-all': function() {
           var all_checked, todo, _i, _len, _ref;
-          all_checked = data.todos.filter(function(item) {
-            return item.completed;
-          }).length === data.todos.length;
+          all_checked = this.scope('n-completed');
           _ref = data.todos;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             todo = _ref[_i];
@@ -65,21 +62,20 @@
           return true;
         }
       },
-      scope: {
-        '.n-completed': function() {
-          return data.todos.filter(function(item) {
-            return item.completed;
-          }).length;
-        },
-        '.n-left': function() {
-          return data.todos.length - data.todos.filter(function(item) {
-            return item.completed;
-          }).length;
-        }
+      'n-completed': function() {
+        return data.todos.filter(function(item) {
+          return item.completed;
+        }).length;
+      },
+      'n-left': function() {
+        return data.todos.length - this.scope('n-completed');
       },
       afterSync: function(data) {
-        $('#filters *').removeClass('selected');
-        return $('.' + this.active_filter).addClass('selected');
+        this.$.find('#filters *').removeClass('selected');
+        return this.$.find('.' + this.active_filter).addClass('selected');
+      },
+      resync: function() {
+        return this.syncRoot(data);
       }
     });
     TodoItem = review.view('.todo', {
@@ -101,10 +97,10 @@
         },
         'keydown [type="text"]': function(e) {
           if (e.which === 13) {
-            this.item.title = e.target.value;
+            this.parent().editing_todo = null;
             return this.$.removeClass('editing');
           } else if (e.which === 27) {
-            return this.$.removeClass('editing');
+            return this.parent().editing_todo = null;
           } else {
             return false;
           }
@@ -116,22 +112,14 @@
           });
         }
       },
-      afterSync: function(node, todo) {
-        var app;
+      afterSync: function(todo) {
         this.$.toggleClass('editing', this.parent().editing_todo === todo);
         this.$.toggleClass('completed', todo.completed);
-        app = this.parent();
-        console.log(app.active_filter);
-        console.log(filters[app.active_filter](todo));
-        if (filters[app.active_filter](todo)) {
-          $(node).css('display', 'block');
-        } else {
-          $(node).css('display', 'none');
-        }
+        this.$.toggleClass('hidden', !filters[this.parent().active_filter](todo));
         return true;
       },
-      syncData: function(data) {
-        return this.parent().syncRoot();
+      resync: function() {
+        return this.parent().resync();
       }
     });
     return review.init($('#todoapp').get(0), data);
